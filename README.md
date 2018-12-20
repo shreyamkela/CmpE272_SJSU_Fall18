@@ -1,2 +1,1 @@
-# CmpE272_SJSU_Fall18
-CmpE 272 course at San Jose State University
+Class of professor Rakesh Ranjan in the Fall 18 semester
