@@ -1,0 +1,123 @@
+Use Firefox 40.0 and SQLite manager addon on by lazierthanthou (which has shiny blue logo) 
+
+CREATING & ALTERING FOREIGN KEYS ON SQLITE MANAGER ADDON IN FIREFOX
+--------------------------------------------------------------------
+CREATE TABLE Purchase (PurchaseID INTEGER PRIMARY KEY,
+CustomerID  INTEGER REFERENCES Customer (CustomerID),
+ItemID INTEGER REFERENCES Item (ItemID),
+Quantity INTEGER,
+VendorID INTEGER REFERENCES Vendor (VendorID),
+PurchaseDate DATETIME)
+................................................
+ALTER TABLE PurchaseOrder ADD COLUMN 
+ItemID INTEGER REFERENCES Item (ItemID)
+
+
+JOINING AND READING DATA WITH FOREIGN KEYS
+------------------------------------------
+Select PurchaseOrder.OrderID, Vendor.Name
+From PurchaseOrder
+Join Vendor On Vendor.VendorID = PurchaseOrder.IDVendor
+
+// "From PurchaseOrder, Vendor" is wrong. Use Just "From PurchaseOrder" and then "Join Vendor on"  or vice versa.
+
+
+All items by each vendor
+-----------------------
+SELECT Vendor.VendorName, Item.Name as ItemName, Item.ItemPrice as ItemPrice$
+FROM Vendor
+JOIN Item on Item.ItemID = ItemsByVendor.ItemID
+JOIN ItemsByVendor on Vendor.VendorID = ItemsByVendor.VendorID
+
+
+All items by Google
+---------------------
+SELECT Vendor.VendorName, Item.Name as ItemName, Item.ItemPrice as ItemPrice$
+FROM Vendor
+JOIN Item on Item.ItemID = ItemsByVendor.ItemID
+JOIN ItemsByVendor on Vendor.VendorID = ItemsByVendor.VendorID
+WHERE Vendor.VendorName LIKE 'Google'
+
+
+All Vendors selling Bluemix
+-----------------------------------
+SELECT Vendor.VendorName, Item.Name as ItemName, Item.ItemPrice as ItemPrice$
+FROM Vendor
+JOIN Item on Item.ItemID = ItemsByVendor.ItemID
+JOIN ItemsByVendor on Vendor.VendorID = ItemsByVendor.VendorID
+WHERE Item.Name LIKE 'Bluemix'
+
+
+All customers living in California
+-------------------------------------
+SELECT  CustomerName
+FROM Customer
+WHERE CustomerAddress LIKE 'Cali%'
+
+
+
+ALL customers that purchased Bluemix
+--------------------------------------
+SELECT Customer.CustomerName, Customer.CustomerAddress, PurchaseOrder.Quantity, PurchaseOrder.PurchaseDate, PurchaseOrder.ReceivedDate
+FROM Customer
+JOIN PurchaseOrder on PurchaseOrder.CustomerID = Customer.CustomerID
+JOIN Item on Item.ItemID = PurchaseOrder.ItemID
+WHERE Item.Name LIKE 'Blue%'
+
+
+ALL purchases made by Musk - Details
+-----------------------------------------------------------------
+SELECT Item.Name as ItemName, Vendor.VendorName, Item.ItemPrice as ItemPrice$, PurchaseOrder.Quantity,  Item.ItemPrice*PurchaseOrder.Quantity as ItemBill$, PurchaseOrder.PurchaseDate, PurchaseOrder.ReceivedDate
+FROM Item
+JOIN ItemsByVendor on ItemsByVendor.ItemID = Item.ItemID
+JOIN Vendor on Vendor.VendorID = ItemsByVendor.VendorID
+JOIN PurchaseOrder on PurchaseOrder.ItemID = ItemsByVendor.ItemID
+JOIN Customer on Customer.CustomerID = PurchaseOrder.CustomerID
+WHERE Customer.CustomerName LIKE "Musk"
+
+Total Bill for Musk from all vendors
+-----------------------------------------------------------------
+SELECT Customer.CustomerName, SUM(Item.ItemPrice*PurchaseOrder.Quantity) as TotalBill$
+FROM Item
+JOIN ItemsByVendor on ItemsByVendor.ItemID = Item.ItemID
+JOIN Vendor on Vendor.VendorID = ItemsByVendor.VendorID
+JOIN PurchaseOrder on PurchaseOrder.ItemID = ItemsByVendor.ItemID
+JOIN Customer on Customer.CustomerID = PurchaseOrder.CustomerID
+WHERE Customer.CustomerName LIKE "Musk"
+
+INSERTING row data into a table - i.e making a new purchase (No check for validity as to whether that vendor sells that item or not)
+------------------------------------------------------------------------------------------------------------------------------------
+INSERT INTO PurchaseOrder ( PurchaseID, CustomerID,ItemID,Quantity,VendorID,PurchaseDate) VALUES (8,3,2,1,1,"09-29-2018")
+
+
+TOTAL Number of Cloud instances purchased under vendor Google
+--------------------------------------------------------------
+SELECT  Item.Name as ItemName, Vendor.VendorName, SUM(PurchaseOrder.Quantity) as Total
+FROM PurchaseOrder
+Join Vendor on PurchaseOrder.PurchaseID = Vendor.VendorID
+JOIN Item on Item.ItemID = ItemsByVendor.ItemID
+JOIN ItemsByVendor on Vendor.VendorID = ItemsByVendor.VendorID
+WHERE Item.Name LIKE 'Cloud Instance' AND Vendor.VendorName LIKE 'Google'
+
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+INCOMPLETE:
+
+Making a new purchase with validity check (Whether that vendor sells that item or not - If not then dont insert)
+---------------------------------------------------------------------------------------------------------------------
+CASE PurchaseOrder.PurchaseID
+WHEN 4 THEN (INSERT INTO PurchaseOrder ( PurchaseID, CustomerID,ItemID,Quantity,VendorID,PurchaseDate) VALUES (7,2,2,1,2,"07-29-2018"))
+END
+......................................................................................
+INSERT INTO PurchaseOrder ( PurchaseID, CustomerID,ItemID,Quantity,VendorID,PurchaseDate) VALUES (7,2,2,1,2,"07-29-2018")
+......................................................................................
+select exists(
+    select 1
+    from PurchaseOrder
+    where PurchaseID = 4
+)
+
+
+
+
+
